@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="SharePoint Microsoft Lists prioritization dashboard for ranking incoming work by impact, urgency, effort, risk, and SLA."
+    />
+    <title>Graphic Design Priority Hub</title>
+    <link rel="stylesheet" href="styles.css?v=11" />
+  </head>
+  <body data-view="queue">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <img src="giz-icon.png" alt="" />
+        </span>
+        <div>
+          <strong>Graphic Design Priority Hub</strong>
+          <span>Microsoft Lists prioritization</span>
+        </div>
+      </div>
+      <nav class="nav" aria-label="Workspace views">
+        <button class="nav-button active" type="button" data-view="queue">Queue</button>
+        <button class="nav-button" type="button" data-view="list">List</button>
+        <button class="nav-button" type="button" data-view="entry">Entry</button>
+        <button class="nav-button" type="button" data-view="rules">Rules</button>
+        <button class="nav-button" type="button" data-view="connect">Connect</button>
+      </nav>
+    </header>
+
+    <main class="layout">
+      <section class="hero" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">SharePoint-ready web application</p>
+          <h1 id="page-title">Prioritize graphic design requests.</h1>
+          <p>
+            Score Microsoft List items by event date, design complexity, content readiness, and delivery
+            status so the next urgent design request is easy to see.
+          </p>
+        </div>
+        <div class="hero-actions">
+          <label class="primary-button file-button">
+            Import CSV
+            <input id="csv-input" type="file" accept=".csv,text/csv" />
+          </label>
+        </div>
+      </section>
+
+      <section class="metrics" aria-label="Priority summary">
+        <article>
+          <span>Active requests</span>
+          <strong id="metric-total">0</strong>
+        </article>
+        <article>
+          <span>P0 / P1 work</span>
+          <strong id="metric-high">0</strong>
+        </article>
+        <article>
+          <span>Due this week</span>
+          <strong id="metric-due">0</strong>
+        </article>
+        <article>
+          <span>Missing information</span>
+          <strong id="metric-average">0</strong>
+        </article>
+      </section>
+
+      <section class="view open" id="queue-view">
+        <aside class="panel filter-panel" aria-label="Filters">
+          <h2>Filters</h2>
+          <label>
+            Search
+            <input id="search-input" type="search" placeholder="Search requests" />
+          </label>
+          <label>
+            Status
+            <select id="status-filter">
+              <option value="all">All statuses</option>
+              <option value="New Request">New Request</option>
+              <option value="Brief Check">Brief Check</option>
+              <option value="Missing Information">Missing Information</option>
+              <option value="Ready for Prioritization">Ready for Prioritization</option>
+              <option value="Scheduled">Scheduled</option>
+              <option value="In Design">In Design</option>
+              <option value="Internal Review">Internal Review</option>
+              <option value="Donor / Partner Review">Donor / Partner Review</option>
+              <option value="Revisions">Revisions</option>
+              <option value="Final Approval">Final Approval</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Archived">Archived</option>
+              <option value="On Hold">On Hold</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </label>
+          <label>
+            Category
+            <select id="category-filter">
+              <option value="all">All categories</option>
+            </select>
+          </label>
+          <label>
+            Minimum score
+            <input id="score-filter" type="range" min="0" max="100" value="0" />
+            <output id="score-output">0</output>
+          </label>
+          <button class="filter-reset" type="button" id="reset-filters">Clear all filters</button>
+        </aside>
+
+        <section class="workbench" aria-label="Prioritized entries">
+          <div class="toolbar">
+            <div>
+              <h2>Ranked queue</h2>
+              <p id="queue-count">0 entries</p>
+            </div>
+            <div class="toolbar-actions">
+              <button class="ghost-button" type="button" id="sort-priority">Sort by priority</button>
+              <button class="ghost-button" type="button" id="sort-due">Sort by due date</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Project</th>
+                  <th>Score</th>
+                  <th>Level</th>
+                  <th>Deadline</th>
+                  <th>Status</th>
+                  <th>Contact</th>
+                </tr>
+              </thead>
+              <tbody id="queue-body"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="list-view">
+        <section class="workbench list-workbench" aria-label="Editable imported list">
+          <div class="toolbar">
+            <div>
+              <h2>List</h2>
+              <p id="list-count">0 entries</p>
+            </div>
+            <span class="status-pill" id="list-message">Edits save to the server</span>
+          </div>
+          <div class="table-wrap list-table-wrap">
+            <table class="list-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Project</th>
+                  <th>Contact</th>
+                  <th>Request</th>
+                  <th>Deadline</th>
+                  <th>Status</th>
+                  <th>Score</th>
+                  <th>Level</th>
+                </tr>
+              </thead>
+              <tbody id="list-body"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="entry-view">
+        <section class="entry-shell" aria-labelledby="entry-title">
+          <form class="panel entry-form" id="entry-form">
+            <div class="section-heading">
+              <div>
+                <h2 id="entry-title">New request entry</h2>
+                <p>Create an intake item and let the app calculate the priority level.</p>
+              </div>
+              <button class="secondary-button" type="reset">Clear</button>
+            </div>
+
+            <div class="entry-sections">
+              <section class="form-section" data-step="Step 1 of 5">
+                <h3>Basic Information</h3>
+                <p class="form-section-help">Who is requesting the work, and which project does it belong to?</p>
+                <div class="form-grid">
+                  <label>
+                    Title
+                    <input name="title" required placeholder="EU visibility banner 3x3m" />
+                  </label>
+                  <label>
+                    Project name
+                    <input name="projectName" required placeholder="Select or enter project" />
+                  </label>
+                  <label>
+                    Project number
+                    <input name="projectNumber" placeholder="G-000000-000" />
+                  </label>
+                  <label>
+                    Contact person
+                    <input name="contactPerson" type="email" required placeholder="name@giz.de" />
+                  </label>
+                  <label>
+                    Approval owner
+                    <input name="approvalOwner" type="email" required placeholder="approver@giz.de" />
+                  </label>
+                  <label>
+                    Donor / Partner
+                    <select name="donorPartner">
+                      <option>EU</option>
+                      <option>BMZ</option>
+                      <option>GIZ</option>
+                      <option>EU + BMZ</option>
+                      <option>Political Partner</option>
+                      <option>Ministry</option>
+                      <option>Municipality</option>
+                      <option>Embassy</option>
+                      <option>UN / International Organisation</option>
+                      <option>Other Donor</option>
+                      <option>Internal only</option>
+                    </select>
+                  </label>
+                </div>
+              </section>
+
+              <section class="form-section" data-step="Step 2 of 5">
+                <h3>Design Request</h3>
+                <p class="form-section-help">Describe the deliverable, format, quantity, and required delivery date.</p>
+                <div class="form-grid">
+                  <label class="wide-field">
+                    Request
+                    <textarea name="requestDetails" rows="4" placeholder="Specify dimensions, orientation, pages/slides, text status, and whether this is new design or adaptation."></textarea>
+                  </label>
+                  <label>
+                    Request type
+                    <select name="request">
+                      <option>PPT</option>
+                      <option>Brochure</option>
+                      <option>Leaflet</option>
+                      <option>Roll-up</option>
+                      <option>Banner</option>
+                      <option>Main Event Poster</option>
+                      <option>Factsheet</option>
+                      <option>Invitation</option>
+                      <option>Agenda</option>
+                      <option>Event Backdrop</option>
+                      <option>Web Banner</option>
+                      <option>Social Media Post</option>
+                      <option>Stage Branding</option>
+                      <option>Infographic Design</option>
+                      <option>Report Layout</option>
+                    </select>
+                  </label>
+                  <label>
+                    Design type
+                    <select name="designType">
+                      <option>Digital</option>
+                      <option>Print</option>
+                    </select>
+                  </label>
+                  <label>
+                    Requested delivery date
+                    <input name="requestedDeliveryDate" type="date" required />
+                  </label>
+                  <label>
+                    Number of deliverables
+                    <input name="numberOfDeliverables" type="number" min="1" value="1" />
+                  </label>
+                </div>
+              </section>
+
+              <section class="form-section" data-step="Step 3 of 5">
+                <h3>Branding & Compliance</h3>
+                <p class="form-section-help">Identify visibility, logo, and language requirements before design begins.</p>
+                <div class="form-grid">
+                  <label>
+                    EU visibility required
+                    <select name="euVisibilityRequired">
+                      <option>Yes</option>
+                      <option selected>No</option>
+                    </select>
+                  </label>
+                  <label>
+                    Partner logos required?
+                    <select name="partnerLogosRequired">
+                      <option>Yes</option>
+                      <option selected>No</option>
+                    </select>
+                  </label>
+                  <label>
+                    Language requirements
+                    <input name="languageRequirements" required placeholder="Albanian / English / Bilingual" />
+                  </label>
+                </div>
+              </section>
+
+              <section class="form-section" data-step="Step 4 of 5">
+                <h3>Content Validation</h3>
+                <p class="form-section-help">Confirm whether the text and source materials are ready for the designer.</p>
+                <div class="form-grid">
+                  <label>
+                    Confirm Attached Content
+                    <select name="confirmAttachedContent">
+                      <option>Yes</option>
+                      <option selected>No</option>
+                    </select>
+                  </label>
+                  <label>
+                    Delivered
+                    <select name="delivered">
+                      <option>Yes</option>
+                      <option selected>No</option>
+                    </select>
+                  </label>
+                  <label>
+                    Content status
+                    <select name="contentStatus">
+                      <option>Final text attached</option>
+                      <option>Draft text attached</option>
+                      <option>Text needs editing</option>
+                      <option selected>Text still missing</option>
+                    </select>
+                  </label>
+                  <label class="wide-field">
+                    Attachments
+                    <input name="attachments" type="file" multiple />
+                  </label>
+                </div>
+              </section>
+
+              <section class="form-section" data-step="Step 5 of 5">
+                <h3>Priority & Internal Workflow</h3>
+                <p class="form-section-help">Help the Hub calculate urgency, effort, sensitivity, and workflow status.</p>
+                <div class="form-grid">
+                  <label>
+                    Urgency level
+                    <select name="urgencyLevel">
+                      <option>Critical - needed within 24/48 hours</option>
+                      <option>High - needed this week</option>
+                      <option selected>Normal - planned request</option>
+                      <option>Low - flexible timeline</option>
+                    </select>
+                  </label>
+                  <label>
+                    Visibility sensitivity
+                    <select name="visibilitySensitivity">
+                      <option>Critical - donor/political/public visibility</option>
+                      <option>High - external publication with partner/donor logos</option>
+                      <option selected>Medium - standard external communication</option>
+                      <option>Low - internal or informal use</option>
+                    </select>
+                  </label>
+                  <label>
+                    Political sensitivity
+                    <select name="politicalSensitivity">
+                      <option>Critical</option>
+                      <option>High</option>
+                      <option>Medium</option>
+                      <option selected>None</option>
+                    </select>
+                  </label>
+                  <label>
+                    Estimated complexity
+                    <select name="estimatedComplexity">
+                      <option>XS - very small adaptation</option>
+                      <option>S - simple design</option>
+                      <option selected>M - standard design package</option>
+                      <option>L - complex design / multiple formats</option>
+                      <option>XL - campaign / event identity / publication</option>
+                    </select>
+                  </label>
+                  <label>
+                    Strategic importance
+                    <select name="strategicImportance">
+                      <option>Critical institutional priority</option>
+                      <option>High programme priority</option>
+                      <option selected>Normal project communication</option>
+                      <option>Internal / low strategic value</option>
+                    </select>
+                  </label>
+                  <label>
+                    Deadline risk
+                    <select name="deadlineRisk">
+                      <option>Due in 24/48 hours</option>
+                      <option>Due in 3-5 days</option>
+                      <option>Due in 1-2 weeks</option>
+                      <option selected>Due later</option>
+                      <option>No fixed deadline</option>
+                    </select>
+                  </label>
+                  <label>
+                    Design status
+                    <select name="designStatus">
+                      <option selected>New Request</option>
+                      <option>Brief Check</option>
+                      <option>Missing Information</option>
+                      <option>Ready for Prioritization</option>
+                      <option>Scheduled</option>
+                      <option>In Design</option>
+                      <option>Internal Review</option>
+                      <option>Donor / Partner Review</option>
+                      <option>Revisions</option>
+                      <option>Final Approval</option>
+                    </select>
+                  </label>
+                </div>
+              </section>
+            </div>
+
+            <div class="form-actions">
+              <button class="primary-button" type="submit">Add to queue</button>
+              <span id="entry-message" role="status"></span>
+            </div>
+          </form>
+
+          <aside class="level-preview panel" aria-label="Priority level preview">
+            <span class="preview-kicker">Live level</span>
+            <strong id="preview-level">Backlog</strong>
+            <div class="preview-score">
+              <span>Score</span>
+              <b id="preview-score">0</b>
+            </div>
+            <div class="preview-breakdown" id="preview-breakdown"></div>
+          </aside>
+        </section>
+      </section>
+
+      <section class="view" id="rules-view">
+        <section class="panel rules-panel" aria-labelledby="rules-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">How ranking works</p>
+              <h2 id="rules-title">Priority scoring rules</h2>
+              <p>
+                The Hub adds points for urgency, importance, visibility, sensitivity, and deadline risk.
+                It subtracts points when source content is incomplete or the design work is complex.
+                A higher final score means the request should be reviewed sooner.
+              </p>
+            </div>
+            <button class="secondary-button" type="button" id="reset-rules">Replay overview</button>
+          </div>
+          <div class="score-story" aria-label="Priority score formula">
+            <div class="score-story-label">
+              <span>Priority score</span>
+              <strong>What should we do next?</strong>
+            </div>
+            <span class="score-operator" aria-hidden="true">=</span>
+            <div class="score-story-part score-story-boost">
+              <span class="score-story-symbol" aria-hidden="true">+</span>
+              <div><strong>Priority signals</strong><small>Urgency, importance, visibility, sensitivity, deadline</small></div>
+            </div>
+            <span class="score-operator" aria-hidden="true">&minus;</span>
+            <div class="score-story-part score-story-penalty">
+              <span class="score-story-symbol" aria-hidden="true">&minus;</span>
+              <div><strong>Delivery friction</strong><small>Incomplete content and design complexity</small></div>
+            </div>
+          </div>
+          <div class="rule-grid" id="rule-grid"></div>
+        </section>
+      </section>
+
+      <section class="view" id="connect-view">
+        <section class="panel connect-panel" aria-labelledby="connect-title">
+          <div class="section-heading">
+            <div>
+              <h2 id="connect-title">Microsoft List connection</h2>
+              <p>Use these settings when hosting the page in SharePoint or wiring it to Microsoft Graph.</p>
+            </div>
+            <span class="status-pill" id="connect-message">Saved locally</span>
+          </div>
+
+          <form class="connect-grid" id="connect-form">
+            <label>
+              Tenant ID
+              <input name="tenantId" placeholder="contoso.onmicrosoft.com or tenant GUID" />
+            </label>
+            <label>
+              SharePoint site ID or URL
+              <input name="siteId" placeholder="https://contoso.sharepoint.com/sites/Operations" />
+            </label>
+            <label>
+              List ID or list name
+              <input name="listId" placeholder="Prioritization Intake" />
+            </label>
+            <label>
+              Client ID
+              <input name="clientId" placeholder="Azure app registration client ID" />
+            </label>
+            <label>
+              Priority score column
+              <input name="scoreColumn" value="PriorityScore" />
+            </label>
+            <label>
+              Priority label column
+              <input name="labelColumn" value="PriorityLabel" />
+            </label>
+          </form>
+
+          <div class="mapping">
+            <h3>Expected Microsoft List columns</h3>
+            <ul>
+              <li><strong>Project Name</strong>, <strong>Contact Person</strong>, <strong>Approval Owner</strong>, <strong>Donor / Partner</strong></li>
+              <li><strong>Request</strong>, <strong>Design Type</strong>, <strong>Requested Delivery Date</strong></li>
+              <li><strong>Urgency Level</strong>, <strong>Visibility Sensitivity</strong>, <strong>Political Sensitivity</strong>, <strong>Content Status</strong>, <strong>Estimated Complexity</strong></li>
+              <li><strong>Design Status</strong>, <strong>Strategic Importance</strong>, <strong>Deadline Risk</strong>, <strong>Priority Score</strong>, <strong>Priority Level</strong></li>
+            </ul>
+          </div>
+
+          <details class="graph-snippet">
+            <summary>Microsoft Graph fetch example</summary>
+            <pre><code>GET /sites/{site-id}/lists/{list-id}/items?expand=fields
+
+PATCH /sites/{site-id}/lists/{list-id}/items/{item-id}/fields
+{
+  "PriorityScore": 87,
+  "PriorityLabel": "Critical"
+}</code></pre>
+          </details>
+        </section>
+      </section>
+    </main>
+
+    <template id="empty-template">
+      <tr>
+        <td colspan="7" class="empty-state">
+          Import a Graphic Design CSV or create a request in Entry to begin prioritizing.
+        </td>
+      </tr>
+    </template>
+
+    <script src="script.js?v=9"></script>
+  </body>
+</html>
