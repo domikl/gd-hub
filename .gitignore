@@ -1,0 +1,5 @@
+brand-kit-page-*.bmp
+server.out.log
+server.err.log
+data/entries.json
+data/entries.json.tmp
